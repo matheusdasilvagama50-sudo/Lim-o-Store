@@ -1,0 +1,1609 @@
+-- ========================================================
+-- LIMÃO HUB PRO - TODOS OS SCRIPTS RESTAURADOS (DELTA)
+-- ========================================================
+
+getgenv().LuaHub = "limao-hub-55-em-1"
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+local HttpService = game:GetService("HttpService")
+local SoundService = game:GetService("SoundService")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+if PlayerGui:FindFirstChild("LimaoHubPRO") then 
+    PlayerGui.LimaoHubPRO:Destroy() 
+end
+
+if SoundService:FindFirstChild("LimaoHubAudio") then
+    SoundService.LimaoHubAudio:Destroy()
+end
+
+local setClipboard = setclipboard or toclipboard or (syn and syn.write_clipboard)
+
+-- Registro do tempo de execução do hub
+local executionStartTime = os.time()
+local executionDateFormatted = os.date("%d/%m/%Y às %H:%M", executionStartTime)
+
+local favorites = {}
+local favFileName = "LimaoHub_Favorites.json"
+pcall(function()
+    if readfile and isfile and isfile(favFileName) then
+        favorites = HttpService:JSONDecode(readfile(favFileName))
+    end
+end)
+
+local function saveFavorites()
+    pcall(function()
+        if writefile then
+            writefile(favFileName, HttpService:JSONEncode(favorites))
+        end
+    end)
+end
+
+----------------------------------------------------------------
+-- SISTEMA DE ÁUDIO
+----------------------------------------------------------------
+local BackgroundSound = Instance.new("Sound")
+BackgroundSound.Name = "LimaoHubAudio"
+BackgroundSound.SoundId = "rbxassetid://84093014695702"
+BackgroundSound.Volume = 0.5
+BackgroundSound.Looped = true
+BackgroundSound.Parent = SoundService
+
+task.spawn(function()
+    pcall(function()
+        BackgroundSound:Play()
+    end)
+end)
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LimaoHubPRO"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999999
+ScreenGui.Parent = PlayerGui
+
+----------------------------------------------------------------
+-- SISTEMA DE TÍTULO NA CABEÇA (BILLBOARDGUI COM RGB SUAVE - MENOR)
+----------------------------------------------------------------
+task.spawn(function()
+    pcall(function()
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local head = character:WaitForChild("Head", 5)
+        if not head then return end
+
+        if head:FindFirstChild("LimaoHeadTitle") then
+            head.LimaoHeadTitle:Destroy()
+        end
+
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "LimaoHeadTitle"
+        billboard.Size = UDim2.new(0, 130, 0, 30)
+        billboard.StudsOffset = Vector3.new(0, 2.0, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = head
+
+        local mainBox = Instance.new("Frame")
+        mainBox.Size = UDim2.new(1, 0, 1, 0)
+        mainBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        mainBox.BackgroundTransparency = 0.45
+        mainBox.ZIndex = 1
+        mainBox.Parent = billboard
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 15)
+        corner.Parent = mainBox
+
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 1.5
+        stroke.Parent = mainBox
+
+        -- Efeito RGB Calmo
+        task.spawn(function()
+            local hue = 0
+            while stroke and stroke.Parent do
+                hue = (hue + 0.002) % 1
+                stroke.Color = Color3.fromHSV(hue, 0.7, 1)
+                task.wait(0.03)
+            end
+        end)
+
+        local profileBtn = Instance.new("ImageButton")
+        profileBtn.Size = UDim2.new(0, 22, 0, 22)
+        profileBtn.Position = UDim2.new(0, 4, 0.5, -11)
+        profileBtn.BackgroundTransparency = 1
+        profileBtn.Image = "rbxassetid://77581360750026"
+        profileBtn.ZIndex = 5
+        profileBtn.Parent = mainBox
+
+        local imgCorner = Instance.new("UICorner")
+        imgCorner.CornerRadius = UDim.new(1, 0)
+        imgCorner.Parent = profileBtn
+
+        local line = Instance.new("Frame")
+        line.Size = UDim2.new(0, 1, 0, 16)
+        line.Position = UDim2.new(0, 30, 0.5, -8)
+        line.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+        line.BackgroundTransparency = 0.5
+        line.BorderSizePixel = 0
+        line.ZIndex = 2
+        line.Parent = mainBox
+
+        local titleLbl = Instance.new("TextLabel")
+        titleLbl.Size = UDim2.new(1, -34, 1, 0)
+        titleLbl.Position = UDim2.new(0, 32, 0, 0)
+        titleLbl.BackgroundTransparency = 1
+        titleLbl.Text = "Limão Hub User"
+        titleLbl.TextColor3 = Color3.fromRGB(240, 240, 240)
+        titleLbl.TextSize = 8.5
+        titleLbl.Font = Enum.Font.GothamBold
+        titleLbl.TextXAlignment = Enum.TextXAlignment.Center
+        titleLbl.ZIndex = 2
+        titleLbl.Parent = mainBox
+
+        local infoBox = Instance.new("Frame")
+        infoBox.Size = UDim2.new(0, 220, 0, 100)
+        infoBox.Position = UDim2.new(0.5, -110, 1, 6)
+        infoBox.BackgroundColor3 = Color3.fromRGB(20, 25, 22)
+        infoBox.BackgroundTransparency = 0.1
+        infoBox.Visible = false
+        infoBox.ZIndex = 10
+        infoBox.Parent = billboard
+
+        local infoCorner = Instance.new("UICorner")
+        infoCorner.CornerRadius = UDim.new(0, 10)
+        infoCorner.Parent = infoBox
+
+        local infoStroke = Instance.new("UIStroke")
+        infoStroke.Thickness = 1.2
+        infoStroke.Color = Color3.fromRGB(132, 204, 22)
+        infoStroke.Parent = infoBox
+
+        local bigAvatar = Instance.new("ImageLabel")
+        bigAvatar.Size = UDim2.new(0, 36, 0, 36)
+        bigAvatar.Position = UDim2.new(0, 8, 0, 8)
+        bigAvatar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        bigAvatar.Image = "rbxassetid://77581360750026"
+        bigAvatar.ZIndex = 11
+        bigAvatar.Parent = infoBox
+
+        local bigAvatarCorner = Instance.new("UICorner")
+        bigAvatarCorner.CornerRadius = UDim.new(1, 0)
+        bigAvatarCorner.Parent = bigAvatar
+
+        local nameDetail = Instance.new("TextLabel")
+        nameDetail.Size = UDim2.new(1, -52, 0, 18)
+        nameDetail.Position = UDim2.new(0, 50, 0, 10)
+        nameDetail.BackgroundTransparency = 1
+        nameDetail.Text = LocalPlayer.DisplayName
+        nameDetail.TextColor3 = Color3.fromRGB(236, 253, 245)
+        nameDetail.TextSize = 10
+        nameDetail.Font = Enum.Font.GothamBold
+        nameDetail.TextXAlignment = Enum.TextXAlignment.Left
+        nameDetail.ZIndex = 11
+        nameDetail.Parent = infoBox
+
+        local infoDetailsLbl = Instance.new("TextLabel")
+        infoDetailsLbl.Size = UDim2.new(1, -16, 0, 48)
+        infoDetailsLbl.Position = UDim2.new(0, 8, 0, 48)
+        infoDetailsLbl.BackgroundTransparency = 1
+        infoDetailsLbl.TextColor3 = Color3.fromRGB(180, 220, 180)
+        infoDetailsLbl.TextSize = 8
+        infoDetailsLbl.Font = Enum.Font.GothamSemibold
+        infoDetailsLbl.TextXAlignment = Enum.TextXAlignment.Left
+        infoDetailsLbl.TextYAlignment = Enum.TextYAlignment.Top
+        infoDetailsLbl.TextWrapped = true
+        infoDetailsLbl.ZIndex = 11
+        infoDetailsLbl.Parent = infoBox
+
+        local isOpen = false
+        task.spawn(function()
+            while true do
+                if isOpen then
+                    local elapsed = os.time() - executionStartTime
+                    local hours = math.floor(elapsed / 3600)
+                    local minutes = math.floor((elapsed % 3600) / 60)
+                    local seconds = elapsed % 60
+                    local timeStr = string.format("%02dh %02dm %02ds", hours, minutes, seconds)
+                    
+                    infoDetailsLbl.Text = "🔑 Key Liberada: Sim\n⏱️ Tempo: " .. timeStr .. "\n📅 Data: " .. executionDateFormatted
+                end
+                task.wait(1)
+            end
+        end)
+
+        profileBtn.MouseButton1Click:Connect(function()
+            isOpen = not isOpen
+            infoBox.Visible = isOpen
+        end)
+    end)
+end)
+
+----------------------------------------------------------------
+-- TEMA
+----------------------------------------------------------------
+local Theme = {
+    bg = Color3.fromRGB(8, 12, 9),
+    header = Color3.fromRGB(12, 20, 14),
+    card = Color3.fromRGB(16, 26, 18),
+    cardHover = Color3.fromRGB(22, 36, 25),
+    accentStart = Color3.fromRGB(132, 204, 22),
+    accentEnd = Color3.fromRGB(77, 124, 15),
+    accentGlow = Color3.fromRGB(163, 230, 53),
+    text = Color3.fromRGB(236, 253, 245),
+    textDim = Color3.fromRGB(115, 142, 122),
+    border = Color3.fromRGB(30, 50, 35),
+    borderActive = Color3.fromRGB(132, 204, 22),
+    categoryBg = Color3.fromRGB(18, 30, 21),
+    red = Color3.fromRGB(239, 68, 68),
+    starActive = Color3.fromRGB(250, 204, 21),
+    recBg = Color3.fromRGB(40, 35, 10),
+    recText = Color3.fromRGB(250, 204, 21)
+}
+
+local function addCorner(parent, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 10)
+    c.Parent = parent
+    return c
+end
+
+local function addStroke(parent, color, thickness, transparency)
+    local s = Instance.new("UIStroke")
+    s.Color = color or Theme.border
+    s.Thickness = thickness or 1
+    s.Transparency = transparency or 0
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Parent = parent
+    return s
+end
+
+local function addGradient(parent, c1, c2, rotation)
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, c1),
+        ColorSequenceKeypoint.new(1, c2)
+    })
+    g.Rotation = rotation or 90
+    g.Parent = parent
+    return g
+end
+
+----------------------------------------------------------------
+-- NOTIFICAÇÃO
+----------------------------------------------------------------
+local function showNotification(text)
+    local mainFrame = ScreenGui:FindFirstChild("MainFrame")
+    if not mainFrame then return end
+
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 190, 0, 34)
+    notif.Position = UDim2.new(1, -200, 1, -44)
+    notif.BackgroundColor3 = Theme.header
+    notif.BackgroundTransparency = 0
+    notif.ZIndex = 2000
+    notif.Parent = mainFrame
+    addCorner(notif, 8)
+    local stroke = addStroke(notif, Theme.accentGlow, 1.5, 0)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -12, 1, 0)
+    lbl.Position = UDim2.new(0, 6, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = Theme.accentGlow
+    lbl.TextSize = 10
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextWrapped = true
+    lbl.ZIndex = 2001
+    lbl.Parent = notif
+
+    task.delay(2.5, function()
+        local tweenBg = TweenService:Create(notif, TweenInfo.new(0.25), {BackgroundTransparency = 1})
+        TweenService:Create(stroke, TweenInfo.new(0.25), {Transparency = 1}):Play()
+        TweenService:Create(lbl, TweenInfo.new(0.25), {TextTransparency = 1}):Play()
+        tweenBg:Play()
+        tweenBg.Completed:Connect(function() notif:Destroy() end)
+    end)
+end
+
+----------------------------------------------------------------
+-- TELA DE CARREGAMENTO
+----------------------------------------------------------------
+local LoadGui = Instance.new("Frame")
+LoadGui.Size = UDim2.new(0, 380, 0, 350)
+LoadGui.Position = UDim2.new(0.5, -190, 0.5, -175)
+LoadGui.BackgroundColor3 = Theme.bg
+LoadGui.BackgroundTransparency = 0.02
+LoadGui.BorderSizePixel = 0
+LoadGui.ZIndex = 600
+LoadGui.Parent = ScreenGui
+addCorner(LoadGui, 20)
+local loadStroke = addStroke(LoadGui, Theme.accentGlow, 1.8, 0.2)
+addGradient(LoadGui, Color3.fromRGB(16, 28, 18), Theme.bg, 45)
+
+local LoadAvatarAura = Instance.new("Frame")
+LoadAvatarAura.Size = UDim2.new(0, 72, 0, 72)
+LoadAvatarAura.Position = UDim2.new(0.5, -36, 0, 22)
+LoadAvatarAura.BackgroundColor3 = Theme.card
+LoadAvatarAura.BackgroundTransparency = 0
+LoadAvatarAura.ZIndex = 601
+LoadAvatarAura.Parent = LoadGui
+addCorner(LoadAvatarAura, 36)
+local auraStroke = addStroke(LoadAvatarAura, Theme.accentGlow, 2, 0)
+addGradient(LoadAvatarAura, Theme.accentStart, Theme.accentEnd, 45)
+
+local LoadAvatar = Instance.new("ImageLabel")
+LoadAvatar.Size = UDim2.new(0, 62, 0, 62)
+LoadAvatar.Position = UDim2.new(0.5, -31, 0, 27)
+LoadAvatar.BackgroundColor3 = Theme.card
+LoadAvatar.BackgroundTransparency = 1
+LoadAvatar.ImageTransparency = 0
+LoadAvatar.ZIndex = 602
+LoadAvatar.Parent = LoadGui
+addCorner(LoadAvatar, 31)
+
+task.spawn(function()
+    local content = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+    LoadAvatar.Image = content
+end)
+
+local LoadHubTitle = Instance.new("TextLabel")
+LoadHubTitle.Size = UDim2.new(1, 0, 0, 24)
+LoadHubTitle.Position = UDim2.new(0, 0, 0, 105)
+LoadHubTitle.BackgroundTransparency = 1
+LoadHubTitle.Text = "LIMÃO HUB PRO"
+LoadHubTitle.TextColor3 = Theme.accentGlow
+LoadHubTitle.TextSize = 16
+LoadHubTitle.Font = Enum.Font.GothamBlack
+LoadHubTitle.ZIndex = 601
+LoadHubTitle.Parent = LoadGui
+
+local LoadUserName = Instance.new("TextLabel")
+LoadUserName.Size = UDim2.new(1, 0, 0, 16)
+LoadUserName.Position = UDim2.new(0, 0, 0, 128)
+LoadUserName.BackgroundTransparency = 1
+LoadUserName.Text = "Olá, " .. LocalPlayer.DisplayName
+LoadUserName.TextColor3 = Theme.textDim
+LoadUserName.TextSize = 9
+LoadUserName.Font = Enum.Font.GothamMedium
+LoadUserName.ZIndex = 601
+LoadUserName.Parent = LoadGui
+
+local ProgressContainer = Instance.new("Frame")
+ProgressContainer.Size = UDim2.new(1, -50, 0, 60)
+ProgressContainer.Position = UDim2.new(0, 25, 0, 165)
+ProgressContainer.BackgroundColor3 = Theme.header
+ProgressContainer.BackgroundTransparency = 0.5
+ProgressContainer.ZIndex = 601
+ProgressContainer.Parent = LoadGui
+addCorner(ProgressContainer, 12)
+local progStroke = addStroke(ProgressContainer, Theme.border, 1, 0)
+
+local StatusLoadLbl = Instance.new("TextLabel")
+StatusLoadLbl.Size = UDim2.new(1, -20, 0, 14)
+StatusLoadLbl.Position = UDim2.new(0, 10, 0, 11)
+StatusLoadLbl.BackgroundTransparency = 1
+StatusLoadLbl.Text = "Iniciando sistema..."
+StatusLoadLbl.TextColor3 = Theme.text
+StatusLoadLbl.TextSize = 9
+StatusLoadLbl.Font = Enum.Font.GothamSemibold
+StatusLoadLbl.TextXAlignment = Enum.TextXAlignment.Left
+StatusLoadLbl.ZIndex = 602
+StatusLoadLbl.Parent = ProgressContainer
+
+local PercentLoadLbl = Instance.new("TextLabel")
+PercentLoadLbl.Size = UDim2.new(1, -20, 0, 14)
+PercentLoadLbl.Position = UDim2.new(0, 10, 0, 11)
+PercentLoadLbl.BackgroundTransparency = 1
+PercentLoadLbl.Text = "0%"
+PercentLoadLbl.TextColor3 = Theme.accentGlow
+PercentLoadLbl.TextSize = 9
+PercentLoadLbl.Font = Enum.Font.GothamBold
+PercentLoadLbl.TextXAlignment = Enum.TextXAlignment.Right
+PercentLoadLbl.ZIndex = 602
+PercentLoadLbl.Parent = ProgressContainer
+
+local BarBG = Instance.new("Frame")
+BarBG.Size = UDim2.new(1, -20, 0, 6)
+BarBG.Position = UDim2.new(0, 10, 0, 36)
+BarBG.BackgroundColor3 = Theme.cardHover
+BarBG.BackgroundTransparency = 0
+BarBG.BorderSizePixel = 0
+BarBG.ZIndex = 602
+BarBG.Parent = ProgressContainer
+addCorner(BarBG, 3)
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Theme.accentGlow
+BarFill.BackgroundTransparency = 0
+BarFill.BorderSizePixel = 0
+BarFill.ZIndex = 603
+BarFill.Parent = BarBG
+addCorner(BarFill, 3)
+addGradient(BarFill, Theme.accentStart, Theme.accentGlow, 0)
+
+local ContinueBtn = Instance.new("TextButton")
+ContinueBtn.Size = UDim2.new(0.5, -28, 0, 38)
+ContinueBtn.Position = UDim2.new(0, 25, 0, 245)
+ContinueBtn.BackgroundColor3 = Theme.cardHover
+ContinueBtn.BackgroundTransparency = 0
+ContinueBtn.TextColor3 = Theme.textDim
+ContinueBtn.Text = "Aguarde..."
+ContinueBtn.TextSize = 9
+ContinueBtn.Font = Enum.Font.GothamBold
+ContinueBtn.AutoButtonColor = false
+ContinueBtn.ZIndex = 601
+ContinueBtn.Parent = LoadGui
+addCorner(ContinueBtn, 10)
+local contStroke = addStroke(ContinueBtn, Theme.border, 1, 0)
+
+local DiscordJoinBtn = Instance.new("TextButton")
+DiscordJoinBtn.Size = UDim2.new(0.5, -28, 0, 38)
+DiscordJoinBtn.Position = UDim2.new(0.5, 3, 0, 245)
+DiscordJoinBtn.BackgroundColor3 = Theme.header
+DiscordJoinBtn.BackgroundTransparency = 0
+DiscordJoinBtn.TextColor3 = Theme.accentGlow
+DiscordJoinBtn.Text = "Discord 💬"
+DiscordJoinBtn.TextSize = 9
+DiscordJoinBtn.Font = Enum.Font.GothamBold
+DiscordJoinBtn.ZIndex = 601
+DiscordJoinBtn.Parent = LoadGui
+addCorner(DiscordJoinBtn, 10)
+local discStroke = addStroke(DiscordJoinBtn, Theme.accentGlow, 1, 0.4)
+
+DiscordJoinBtn.MouseButton1Click:Connect(function()
+    if setClipboard then setClipboard("https://discord.gg/vQnYDd2PK3") end
+    showNotification("✅ Link copiado!")
+end)
+
+local FooterCredit = Instance.new("TextLabel")
+FooterCredit.Size = UDim2.new(1, 0, 0, 14)
+FooterCredit.Position = UDim2.new(0, 0, 1, -22)
+FooterCredit.BackgroundTransparency = 1
+FooterCredit.Text = "Desenvolvido por Tiojef — Limão Hub v2.5"
+FooterCredit.TextColor3 = Theme.textDim
+FooterCredit.TextSize = 7
+FooterCredit.Font = Enum.Font.Gotham
+FooterCredit.ZIndex = 601
+FooterCredit.Parent = LoadGui
+
+----------------------------------------------------------------
+-- JANELA PRINCIPAL
+----------------------------------------------------------------
+local currentSizeState = 2
+local sizes = {
+    [1] = {w = 340, h = 340},
+    [2] = {w = 420, h = 420}, 
+    [3] = {w = 500, h = 500}  
+}
+
+local mainW = sizes[currentSizeState].w
+local fullH = sizes[currentSizeState].h
+local headerH = 42
+local profileH = 38
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, mainW, 0, fullH)
+MainFrame.Position = UDim2.new(0.5, -mainW/2, 0.5, -fullH/2)
+MainFrame.BackgroundColor3 = Theme.bg
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.ClipsDescendants = false
+MainFrame.Visible = false
+MainFrame.ZIndex = 100
+MainFrame.Parent = ScreenGui
+addCorner(MainFrame, 14)
+local mainStroke = addStroke(MainFrame, Theme.borderActive, 1.2, 0.3)
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, headerH)
+Header.BackgroundColor3 = Theme.header
+Header.BackgroundTransparency = 0
+Header.BorderSizePixel = 0
+Header.ZIndex = 101
+Header.Parent = MainFrame
+addCorner(Header, 14)
+
+local HeaderFill = Instance.new("Frame")
+HeaderFill.Size = UDim2.new(1, 0, 0, 10)
+HeaderFill.Position = UDim2.new(0, 0, 1, -10)
+HeaderFill.BackgroundColor3 = Theme.header
+HeaderFill.BackgroundTransparency = 0
+HeaderFill.BorderSizePixel = 0
+HeaderFill.ZIndex = 101
+HeaderFill.Parent = Header
+
+local TitleContainer = Instance.new("Frame")
+TitleContainer.Size = UDim2.new(0, 160, 1, 0)
+TitleContainer.Position = UDim2.new(0, 10, 0, 0)
+TitleContainer.BackgroundTransparency = 1
+TitleContainer.ZIndex = 102
+TitleContainer.Parent = Header
+
+local TitleLayout = Instance.new("UIListLayout")
+TitleLayout.FillDirection = Enum.FillDirection.Horizontal
+TitleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+TitleLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TitleLayout.Padding = UDim.new(0, 5)
+TitleLayout.Parent = TitleContainer
+
+local Title = Instance.new("TextLabel")
+Title.Text = "LIMÃO HUB"
+Title.TextSize = 10
+Title.Font = Enum.Font.GothamBlack
+Title.TextColor3 = Theme.accentGlow
+Title.AutomaticSize = Enum.AutomaticSize.X
+Title.Size = UDim2.new(0, 0, 1, 0)
+Title.BackgroundTransparency = 1
+Title.LayoutOrder = 1
+Title.ZIndex = 102
+Title.Parent = TitleContainer
+
+local Badge = Instance.new("TextLabel")
+Badge.Text = "PRO"
+Badge.TextSize = 7
+Badge.Font = Enum.Font.GothamBold
+Badge.TextColor3 = Theme.bg
+Badge.BackgroundColor3 = Theme.accentGlow
+Badge.Size = UDim2.new(0, 26, 0, 14)
+Badge.LayoutOrder = 2
+Badge.ZIndex = 102
+Badge.Parent = TitleContainer
+addCorner(Badge, 4)
+
+local HeaderControls = Instance.new("Frame")
+HeaderControls.Size = UDim2.new(0, 150, 1, 0)
+HeaderControls.Position = UDim2.new(1, -155, 0, 0)
+HeaderControls.BackgroundTransparency = 1
+HeaderControls.ZIndex = 102
+HeaderControls.Parent = Header
+
+local ControlsLayout = Instance.new("UIListLayout")
+ControlsLayout.FillDirection = Enum.FillDirection.Horizontal
+ControlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+ControlsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+ControlsLayout.Padding = UDim.new(0, 4)
+ControlsLayout.Parent = HeaderControls
+
+local MusicBtn = Instance.new("TextButton")
+MusicBtn.Size = UDim2.new(0, 22, 0, 22)
+MusicBtn.Text = "🎵"
+MusicBtn.TextSize = 10
+MusicBtn.Font = Enum.Font.GothamBold
+MusicBtn.BackgroundColor3 = Theme.card
+MusicBtn.TextColor3 = Theme.text
+MusicBtn.ZIndex = 103
+MusicBtn.Parent = HeaderControls
+addCorner(MusicBtn, 6)
+addStroke(MusicBtn, Theme.border, 1)
+
+local DiscordBtn = Instance.new("TextButton")
+DiscordBtn.Size = UDim2.new(0, 45, 0, 22)
+DiscordBtn.Text = "Discord"
+DiscordBtn.TextSize = 7.5
+DiscordBtn.Font = Enum.Font.GothamBold
+DiscordBtn.BackgroundColor3 = Theme.card
+DiscordBtn.TextColor3 = Theme.accentGlow
+DiscordBtn.ZIndex = 103
+DiscordBtn.Parent = HeaderControls
+addCorner(DiscordBtn, 6)
+addStroke(DiscordBtn, Theme.border, 1)
+
+DiscordBtn.MouseButton1Click:Connect(function()
+    if setClipboard then setClipboard("https://discord.gg/vQnYDd2PK3") end
+    showNotification("✅ Link copiado!")
+end)
+
+local ResizeBtn = Instance.new("TextButton")
+ResizeBtn.Size = UDim2.new(0, 22, 0, 22)
+ResizeBtn.Text = "📏"
+ResizeBtn.TextSize = 10
+ResizeBtn.Font = Enum.Font.GothamBold
+ResizeBtn.BackgroundColor3 = Theme.card
+ResizeBtn.TextColor3 = Theme.text
+ResizeBtn.ZIndex = 103
+ResizeBtn.Parent = HeaderControls
+addCorner(ResizeBtn, 6)
+addStroke(ResizeBtn, Theme.border, 1)
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Size = UDim2.new(0, 22, 0, 22)
+ToggleBtn.Text = "-"
+ToggleBtn.TextSize = 10
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.BackgroundColor3 = Theme.card
+ToggleBtn.TextColor3 = Theme.text
+ToggleBtn.ZIndex = 103
+ToggleBtn.Parent = HeaderControls
+addCorner(ToggleBtn, 6)
+addStroke(ToggleBtn, Theme.border, 1)
+
+----------------------------------------------------------------
+-- PAINEL FLUTUANTE DE MÚSICA
+----------------------------------------------------------------
+local MusicHub = Instance.new("Frame")
+MusicHub.Name = "MusicHub"
+MusicHub.Size = UDim2.new(0, 180, 0, 210)
+MusicHub.Position = UDim2.new(1, 8, 0, 0)
+MusicHub.BackgroundColor3 = Theme.bg
+MusicHub.BackgroundTransparency = 0.05
+MusicHub.Visible = false
+MusicHub.ZIndex = 500
+MusicHub.Parent = MainFrame
+addCorner(MusicHub, 12)
+addStroke(MusicHub, Theme.accentGlow, 1.5)
+
+local MusicHubHeader = Instance.new("TextLabel")
+MusicHubHeader.Size = UDim2.new(1, 0, 0, 28)
+MusicHubHeader.BackgroundTransparency = 1
+MusicHubHeader.Text = "🎵 PAINEL DE MÚSICA"
+MusicHubHeader.TextColor3 = Theme.accentGlow
+MusicHubHeader.TextSize = 9
+MusicHubHeader.Font = Enum.Font.GothamBold
+MusicHubHeader.ZIndex = 501
+MusicHubHeader.Parent = MusicHub
+
+local MusicInputBox = Instance.new("TextBox")
+MusicInputBox.Size = UDim2.new(1, -16, 0, 28)
+MusicInputBox.Position = UDim2.new(0, 8, 0, 32)
+MusicInputBox.BackgroundColor3 = Theme.card
+MusicInputBox.PlaceholderText = "Cole o ID da música aqui..."
+MusicInputBox.PlaceholderColor3 = Theme.textDim
+MusicInputBox.Text = ""
+MusicInputBox.TextColor3 = Theme.text
+MusicInputBox.TextSize = 8
+MusicInputBox.Font = Enum.Font.GothamSemibold
+MusicInputBox.ZIndex = 501
+MusicInputBox.Parent = MusicHub
+addCorner(MusicInputBox, 6)
+addStroke(MusicInputBox, Theme.border, 1)
+
+local MusicConfirmBtn = Instance.new("TextButton")
+MusicConfirmBtn.Size = UDim2.new(0.5, -10, 0, 26)
+MusicConfirmBtn.Position = UDim2.new(0, 8, 0, 68)
+MusicConfirmBtn.BackgroundColor3 = Theme.accentStart
+MusicConfirmBtn.Text = "CONFIRMAR"
+MusicConfirmBtn.TextColor3 = Theme.bg
+MusicConfirmBtn.TextSize = 7.5
+MusicConfirmBtn.Font = Enum.Font.GothamBold
+MusicConfirmBtn.ZIndex = 501
+MusicConfirmBtn.Parent = MusicHub
+addCorner(MusicConfirmBtn, 6)
+addGradient(MusicConfirmBtn, Theme.accentStart, Theme.accentEnd)
+
+local MusicPauseBtn = Instance.new("TextButton")
+MusicPauseBtn.Size = UDim2.new(0.5, -10, 0, 26)
+MusicPauseBtn.Position = UDim2.new(0.5, 2, 0, 68)
+MusicPauseBtn.BackgroundColor3 = Theme.cardHover
+MusicPauseBtn.Text = "⏸ PAUSE"
+MusicPauseBtn.TextColor3 = Theme.text
+MusicPauseBtn.TextSize = 7.5
+MusicPauseBtn.Font = Enum.Font.GothamBold
+MusicPauseBtn.ZIndex = 501
+MusicPauseBtn.Parent = MusicHub
+addCorner(MusicPauseBtn, 6)
+addStroke(MusicPauseBtn, Theme.border, 1)
+
+local MusicVolLabel = Instance.new("TextLabel")
+MusicVolLabel.Size = UDim2.new(1, 0, 0, 12)
+MusicVolLabel.Position = UDim2.new(0, 0, 0, 102)
+MusicVolLabel.BackgroundTransparency = 1
+MusicVolLabel.Text = "VOLUME: 50%"
+MusicVolLabel.TextColor3 = Theme.textDim
+MusicVolLabel.TextSize = 7.5
+MusicVolLabel.Font = Enum.Font.GothamBold
+MusicVolLabel.ZIndex = 501
+MusicVolLabel.Parent = MusicHub
+
+local MusicVolBg = Instance.new("Frame")
+MusicVolBg.Size = UDim2.new(1, -20, 0, 6)
+MusicVolBg.Position = UDim2.new(0, 10, 0, 118)
+MusicVolBg.BackgroundColor3 = Theme.cardHover
+MusicVolBg.ZIndex = 501
+MusicVolBg.Parent = MusicHub
+addCorner(MusicVolBg, 3)
+
+local MusicVolFill = Instance.new("Frame")
+MusicVolFill.Size = UDim2.new(0.5, 0, 1, 0)
+MusicVolFill.BackgroundColor3 = Theme.accentGlow
+MusicVolFill.BorderSizePixel = 0
+MusicVolFill.ZIndex = 502
+MusicVolFill.Parent = MusicVolBg
+addCorner(MusicVolFill, 3)
+
+local MusicVolBtn = Instance.new("TextButton")
+MusicVolBtn.Size = UDim2.new(1, 0, 1, 0)
+MusicVolBtn.BackgroundTransparency = 1
+MusicVolBtn.Text = ""
+MusicVolBtn.ZIndex = 503
+MusicVolBtn.Parent = MusicVolBg
+
+local MusicRemoveGameBtn = Instance.new("TextButton")
+MusicRemoveGameBtn.Size = UDim2.new(1, -16, 0, 26)
+MusicRemoveGameBtn.Position = UDim2.new(0, 8, 0, 134)
+MusicRemoveGameBtn.BackgroundColor3 = Theme.cardHover
+MusicRemoveGameBtn.Text = "🔇 REMOVER MÚSICA DO JOGO"
+MusicRemoveGameBtn.TextColor3 = Theme.red
+MusicRemoveGameBtn.TextSize = 7.5
+MusicRemoveGameBtn.Font = Enum.Font.GothamBold
+MusicRemoveGameBtn.ZIndex = 501
+MusicRemoveGameBtn.Parent = MusicHub
+addCorner(MusicRemoveGameBtn, 6)
+addStroke(MusicRemoveGameBtn, Theme.red, 1, 0.3)
+
+local MusicStatusLbl = Instance.new("TextLabel")
+MusicStatusLbl.Size = UDim2.new(1, -16, 0, 20)
+MusicStatusLbl.Position = UDim2.new(0, 8, 0, 168)
+MusicStatusLbl.BackgroundTransparency = 1
+MusicStatusLbl.Text = "Tocando padrão..."
+MusicStatusLbl.TextColor3 = Theme.accentGlow
+MusicStatusLbl.TextSize = 7.5
+MusicStatusLbl.Font = Enum.Font.Gotham
+MusicStatusLbl.ZIndex = 501
+MusicStatusLbl.Parent = MusicHub
+
+MusicBtn.MouseButton1Click:Connect(function()
+    MusicHub.Visible = not MusicHub.Visible
+    ResizeMenu.Visible = false
+end)
+
+MusicConfirmBtn.MouseButton1Click:Connect(function()
+    local textId = MusicInputBox.Text:gsub("%D+", "")
+    if textId ~= "" and tonumber(textId) then
+        BackgroundSound.SoundId = "rbxassetid://" .. textId
+        BackgroundSound:Play()
+        MusicPauseBtn.Text = "⏸ PAUSE"
+        MusicStatusLbl.Text = "ID: " .. textId
+        showNotification("🎵 Música alterada!")
+    else
+        showNotification("❌ ID inválido!")
+    end
+end)
+
+local isPaused = false
+MusicPauseBtn.MouseButton1Click:Connect(function()
+    isPaused = not isPaused
+    if isPaused then
+        BackgroundSound:Pause()
+        MusicPauseBtn.Text = "▶ PLAY"
+        MusicStatusLbl.Text = "Música pausada"
+    else
+        BackgroundSound:Resume()
+        MusicPauseBtn.Text = "⏸ PAUSE"
+        MusicStatusLbl.Text = "Tocando..."
+    end
+end)
+
+MusicRemoveGameBtn.MouseButton1Click:Connect(function()
+    pcall(function()
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if obj:IsA("Sound") and obj ~= BackgroundSound then
+                obj:Stop()
+                obj.Volume = 0
+            end
+        end
+        for _, obj in ipairs(SoundService:GetDescendants()) do
+            if obj:IsA("Sound") and obj ~= BackgroundSound then
+                obj:Stop()
+                obj.Volume = 0
+            end
+        end
+    end)
+    showNotification("🔇 Música do jogo removida!")
+end)
+
+local draggingMusicVol = false
+MusicVolBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMusicVol = true
+    end
+end)
+MusicVolBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMusicVol = false
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if draggingMusicVol and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local mousePos = input.Position.X
+        local sliderPos = MusicVolBg.AbsolutePosition.X
+        local sliderWidth = MusicVolBg.AbsoluteSize.X
+        local scale = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
+        
+        MusicVolFill.Size = UDim2.new(scale, 0, 1, 0)
+        BackgroundSound.Volume = scale
+        MusicVolLabel.Text = "VOLUME: " .. math.floor(scale * 100) .. "%"
+    end
+end)
+
+----------------------------------------------------------------
+-- MENU DE REDIMENSIONAMENTO
+----------------------------------------------------------------
+local ResizeMenu = Instance.new("Frame")
+ResizeMenu.Name = "ResizeMenu"
+ResizeMenu.Size = UDim2.new(0, 110, 0, 95)
+ResizeMenu.Position = UDim2.new(1, -115, 0, headerH + 4)
+ResizeMenu.BackgroundColor3 = Theme.header
+ResizeMenu.Visible = false
+ResizeMenu.ZIndex = 500
+ResizeMenu.Parent = MainFrame
+addCorner(ResizeMenu, 10)
+addStroke(ResizeMenu, Theme.borderActive, 1.5)
+
+local ResizeLayout = Instance.new("UIListLayout")
+ResizeLayout.Padding = UDim.new(0, 4)
+ResizeLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+ResizeLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+ResizeLayout.Parent = ResizeMenu
+
+local function applySize(sizeIndex)
+    currentSizeState = sizeIndex
+    local target = sizes[sizeIndex]
+    
+    TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, target.w, 0, target.h)
+    }):Play()
+    
+    ResizeMenu.Visible = false
+    showNotification("📐 Tamanho alterado!")
+end
+
+local options = {
+    {name = "Pequeno", idx = 1},
+    {name = "Médio", idx = 2},
+    {name = "Grande", idx = 3}
+}
+
+for _, opt in ipairs(options) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 24)
+    btn.Text = opt.name
+    btn.TextSize = 8
+    btn.Font = Enum.Font.GothamBold
+    btn.BackgroundColor3 = Theme.card
+    btn.TextColor3 = Theme.text
+    btn.ZIndex = 501
+    btn.Parent = ResizeMenu
+    addCorner(btn, 6)
+    
+    btn.MouseButton1Click:Connect(function()
+        applySize(opt.idx)
+    end)
+end
+
+ResizeBtn.MouseButton1Click:Connect(function()
+    ResizeMenu.Visible = not ResizeMenu.Visible
+    MusicHub.Visible = false
+end)
+
+local Body = Instance.new("Frame")
+Body.Name = "Body"
+Body.Size = UDim2.new(1, 0, 1, -(headerH + profileH))
+Body.Position = UDim2.new(0, 0, 0, headerH)
+Body.BackgroundTransparency = 1
+Body.ZIndex = 102
+Body.Parent = MainFrame
+
+local isMinimized = false
+ToggleBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    ResizeMenu.Visible = false
+    MusicHub.Visible = false
+    if isMinimized then
+        ToggleBtn.Text = "+"
+        Body.Visible = false
+        HeaderFill.Visible = false
+        MainFrame:FindFirstChild("ProfileBar").Visible = false
+        TweenService:Create(MainFrame, TweenInfo.new(0.25), {Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, headerH)}):Play()
+    else
+        ToggleBtn.Text = "-"
+        local target = sizes[currentSizeState]
+        TweenService:Create(MainFrame, TweenInfo.new(0.25), {Size = UDim2.new(0, target.w, 0, target.h)}):Play()
+        HeaderFill.Visible = true
+        Body.Visible = true
+        MainFrame:FindFirstChild("ProfileBar").Visible = true
+    end
+end)
+
+local dragging, dragStart, startPos
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+Header.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+----------------------------------------------------------------
+-- PAINEL DE ESTATÍSTICAS E TIMER
+----------------------------------------------------------------
+local StatsCard = Instance.new("Frame")
+StatsCard.Size = UDim2.new(1, -20, 0, 32)
+StatsCard.Position = UDim2.new(0, 10, 0, 5)
+StatsCard.BackgroundColor3 = Theme.header
+StatsCard.ZIndex = 103
+StatsCard.Parent = Body
+addCorner(StatsCard, 10)
+addStroke(StatsCard, Theme.borderActive, 1, 0.3)
+
+local StatsIcon = Instance.new("TextLabel")
+StatsIcon.Size = UDim2.new(0, 28, 1, 0)
+StatsIcon.Position = UDim2.new(0, 4, 0, 0)
+StatsIcon.BackgroundTransparency = 1
+StatsIcon.Text = "⏳"
+StatsIcon.TextSize = 12
+StatsIcon.ZIndex = 104
+StatsIcon.Parent = StatsCard
+
+local StatsInfoTitle = Instance.new("TextLabel")
+StatsInfoTitle.Size = UDim2.new(0, 140, 0, 12)
+StatsInfoTitle.Position = UDim2.new(0, 32, 0, 5)
+StatsInfoTitle.BackgroundTransparency = 1
+StatsInfoTitle.Text = "PRAZO DE MANUTENÇÃO"
+StatsInfoTitle.TextColor3 = Theme.textDim
+StatsInfoTitle.TextSize = 7
+StatsInfoTitle.Font = Enum.Font.GothamBold
+StatsInfoTitle.TextXAlignment = Enum.TextXAlignment.Left
+StatsInfoTitle.ZIndex = 104
+StatsInfoTitle.Parent = StatsCard
+
+local TimerVal = Instance.new("TextLabel")
+TimerVal.Size = UDim2.new(0, 140, 0, 12)
+TimerVal.Position = UDim2.new(0, 32, 0, 16)
+TimerVal.BackgroundTransparency = 1
+TimerVal.Text = "23:59:59 restantes"
+TimerVal.TextColor3 = Theme.accentGlow
+TimerVal.TextSize = 9
+TimerVal.Font = Enum.Font.GothamBlack
+TimerVal.TextXAlignment = Enum.TextXAlignment.Left
+TimerVal.ZIndex = 104
+TimerVal.Parent = StatsCard
+
+task.spawn(function()
+    local totalSecondsLeft = 24 * 3600
+    while totalSecondsLeft > 0 do
+        local hours = math.floor(totalSecondsLeft / 3600)
+        local minutes = math.floor((totalSecondsLeft % 3600) / 60)
+        local seconds = totalSecondsLeft % 60
+        TimerVal.Text = string.format("%02d:%02d:%02d restantes", hours, minutes, seconds)
+        task.wait(1)
+        totalSecondsLeft = totalSecondsLeft - 1
+    end
+end)
+
+local BadgePill = Instance.new("Frame")
+BadgePill.Size = UDim2.new(0, 95, 0, 18)
+BadgePill.Position = UDim2.new(1, -101, 0.5, -9)
+BadgePill.BackgroundColor3 = Theme.card
+BadgePill.ZIndex = 104
+BadgePill.Parent = StatsCard
+addCorner(BadgePill, 6)
+addStroke(BadgePill, Theme.border, 1, 0.5)
+
+local BadgePillText = Instance.new("TextLabel")
+BadgePillText.Size = UDim2.new(1, 0, 1, 0)
+BadgePillText.BackgroundTransparency = 1
+BadgePillText.Text = "49 | 2"
+BadgePillText.TextSize = 8
+BadgePillText.Font = Enum.Font.GothamBold
+BadgePillText.ZIndex = 105
+BadgePillText.Parent = BadgePill
+
+----------------------------------------------------------------
+-- BARRA DE PESQUISA E LISTA
+----------------------------------------------------------------
+local SearchFrame = Instance.new("Frame")
+SearchFrame.Size = UDim2.new(1, -20, 0, 30)
+SearchFrame.Position = UDim2.new(0, 10, 0, 42)
+SearchFrame.BackgroundColor3 = Theme.header
+SearchFrame.ZIndex = 103
+SearchFrame.Parent = Body
+addCorner(SearchFrame, 15)
+local searchStroke = addStroke(SearchFrame, Theme.border, 1)
+
+local SearchIcon = Instance.new("TextLabel")
+SearchIcon.Size = UDim2.new(0, 26, 1, 0)
+SearchIcon.Position = UDim2.new(0, 4, 0, 0)
+SearchIcon.BackgroundTransparency = 1
+SearchIcon.Text = "🔍"
+SearchIcon.TextSize = 10
+SearchIcon.ZIndex = 104
+SearchIcon.Parent = SearchFrame
+
+local SearchBox = Instance.new("TextBox")
+SearchBox.Size = UDim2.new(1, -36, 1, 0)
+SearchBox.Position = UDim2.new(0, 32, 0, 0)
+SearchBox.BackgroundTransparency = 1
+SearchBox.PlaceholderText = "Pesquisar no Limão Hub..."
+SearchBox.PlaceholderColor3 = Theme.textDim
+SearchBox.Text = ""
+SearchBox.TextColor3 = Theme.text
+SearchBox.TextSize = 9
+SearchBox.Font = Enum.Font.GothamSemibold
+SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+SearchBox.ZIndex = 104
+SearchBox.Parent = SearchFrame
+
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -20, 1, -80)
+Scroll.Position = UDim2.new(0, 10, 0, 78)
+Scroll.BackgroundTransparency = 1
+Scroll.BorderSizePixel = 0
+Scroll.ScrollBarThickness = 3
+Scroll.ScrollBarImageColor3 = Theme.accentGlow
+Scroll.ZIndex = 103
+Scroll.Parent = Body
+
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 5)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Parent = Scroll
+
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
+end)
+
+local ProfileBar = Instance.new("Frame")
+ProfileBar.Name = "ProfileBar"
+ProfileBar.Size = UDim2.new(1, 0, 0, profileH)
+ProfileBar.Position = UDim2.new(0, 0, 1, -profileH)
+ProfileBar.BackgroundColor3 = Theme.header
+ProfileBar.BackgroundTransparency = 0
+ProfileBar.BorderSizePixel = 0
+ProfileBar.ZIndex = 102
+ProfileBar.Parent = MainFrame
+addCorner(ProfileBar, 14)
+
+local AvatarImage = Instance.new("ImageLabel")
+AvatarImage.Size = UDim2.new(0, 24, 0, 24)
+AvatarImage.Position = UDim2.new(0, 8, 0.5, -12)
+AvatarImage.BackgroundColor3 = Theme.card
+AvatarImage.ZIndex = 103
+AvatarImage.Parent = ProfileBar
+addCorner(AvatarImage, 12)
+addStroke(AvatarImage, Theme.borderActive, 1)
+
+task.spawn(function()
+    local content = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+    AvatarImage.Image = content
+end)
+
+local UserLabel = Instance.new("TextLabel")
+UserLabel.Size = UDim2.new(0, 95, 0, 14)
+UserLabel.Position = UDim2.new(0, 36, 0.5, -12)
+UserLabel.BackgroundTransparency = 1
+UserLabel.Text = LocalPlayer.DisplayName
+UserLabel.TextColor3 = Theme.text
+UserLabel.TextSize = 8
+UserLabel.Font = Enum.Font.GothamBold
+UserLabel.TextXAlignment = Enum.TextXAlignment.Left
+UserLabel.ZIndex = 103
+UserLabel.Parent = ProfileBar
+
+local NameLabel = Instance.new("TextLabel")
+NameLabel.Size = UDim2.new(0, 95, 0, 10)
+NameLabel.Position = UDim2.new(0, 36, 0.5, 2)
+NameLabel.BackgroundTransparency = 1
+NameLabel.Text = "@" .. LocalPlayer.Name
+NameLabel.TextColor3 = Theme.textDim
+NameLabel.TextSize = 7
+NameLabel.Font = Enum.Font.Gotham
+NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+NameLabel.ZIndex = 103
+NameLabel.Parent = ProfileBar
+
+local TimeLabel = Instance.new("TextLabel")
+TimeLabel.Size = UDim2.new(0, 50, 1, 0)
+TimeLabel.Position = UDim2.new(0, 134, 0, 0)
+TimeLabel.BackgroundTransparency = 1
+TimeLabel.Text = "Hora"
+TimeLabel.TextColor3 = Theme.text
+TimeLabel.TextSize = 8
+TimeLabel.Font = Enum.Font.GothamBold
+TimeLabel.TextXAlignment = Enum.TextXAlignment.Left
+TimeLabel.ZIndex = 103
+TimeLabel.Parent = ProfileBar
+
+local StatsLabel = Instance.new("TextLabel")
+StatsLabel.Size = UDim2.new(0, 120, 1, 0)
+StatsLabel.Position = UDim2.new(1, -125, 0, 0)
+StatsLabel.BackgroundTransparency = 1
+StatsLabel.Text = "FPS / Ping"
+StatsLabel.TextColor3 = Theme.accentGlow
+StatsLabel.TextSize = 8
+StatsLabel.Font = Enum.Font.GothamBold
+StatsLabel.TextXAlignment = Enum.TextXAlignment.Right
+StatsLabel.ZIndex = 103
+StatsLabel.Parent = ProfileBar
+
+local lastTime = os.clock()
+local frameCount = 0
+
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTime = os.clock()
+    
+    if currentTime - lastTime >= 0.5 then
+        local fps = math.floor(frameCount / (currentTime - lastTime))
+        frameCount = 0
+        lastTime = currentTime
+        
+        local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
+        StatsLabel.Text = tostring(fps) .. " FPS  |  " .. tostring(ping) .. " ms"
+        
+        local utcTime = os.time() - (3 * 3600)
+        local timeTable = os.date("!*t", utcTime)
+        TimeLabel.Text = string.format("%02d:%02d", timeTable.hour, timeTable.min)
+    end
+end)
+
+local ModalOverlay = Instance.new("Frame")
+ModalOverlay.Size = UDim2.new(1, 0, 1, 0)
+ModalOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ModalOverlay.BackgroundTransparency = 0.4
+ModalOverlay.Visible = false
+ModalOverlay.ZIndex = 800
+ModalOverlay.Parent = MainFrame
+addCorner(ModalOverlay, 14)
+
+local ModalBox = Instance.new("Frame")
+ModalBox.Size = UDim2.new(0, 240, 0, 120)
+ModalBox.Position = UDim2.new(0.5, -120, 0.5, -60)
+ModalBox.BackgroundColor3 = Theme.bg
+ModalBox.ZIndex = 801
+ModalBox.Parent = ModalOverlay
+addCorner(ModalBox, 12)
+addStroke(ModalBox, Theme.borderActive, 1.5)
+
+local ModalTitle = Instance.new("TextLabel")
+ModalTitle.Size = UDim2.new(1, 0, 0, 26)
+ModalTitle.Position = UDim2.new(0, 0, 0, 6)
+ModalTitle.BackgroundTransparency = 1
+ModalTitle.Text = "CONFIRMAÇÃO"
+ModalTitle.TextColor3 = Theme.accentGlow
+ModalTitle.TextSize = 10
+ModalTitle.Font = Enum.Font.GothamBold
+ModalTitle.ZIndex = 802
+ModalTitle.Parent = ModalBox
+
+local ModalDesc = Instance.new("TextLabel")
+ModalDesc.Size = UDim2.new(1, -20, 0, 32)
+ModalDesc.Position = UDim2.new(0, 10, 0, 32)
+ModalDesc.BackgroundTransparency = 1
+ModalDesc.Text = "Deseja carregar este script?"
+ModalDesc.TextColor3 = Theme.text
+ModalDesc.TextSize = 8
+ModalDesc.Font = Enum.Font.Gotham
+ModalDesc.TextWrapped = true
+ModalDesc.ZIndex = 802
+ModalDesc.Parent = ModalBox
+
+local ConfirmBtn = Instance.new("TextButton")
+ConfirmBtn.Size = UDim2.new(0.45, -4, 0, 24)
+ConfirmBtn.Position = UDim2.new(0.05, 0, 1, -30)
+ConfirmBtn.Text = "EXECUTAR"
+ConfirmBtn.TextSize = 8
+ConfirmBtn.Font = Enum.Font.GothamBold
+ConfirmBtn.BackgroundColor3 = Theme.accentStart
+ConfirmBtn.TextColor3 = Theme.bg
+ConfirmBtn.ZIndex = 802
+ConfirmBtn.Parent = ModalBox
+addCorner(ConfirmBtn, 6)
+
+local CancelBtn = Instance.new("TextButton")
+CancelBtn.Size = UDim2.new(0.45, -4, 0, 24)
+CancelBtn.Position = UDim2.new(0.5, 4, 1, -30)
+CancelBtn.Text = "CANCELAR"
+CancelBtn.TextSize = 8
+CancelBtn.Font = Enum.Font.GothamBold
+CancelBtn.BackgroundColor3 = Theme.card
+CancelBtn.TextColor3 = Theme.red
+CancelBtn.ZIndex = 802
+CancelBtn.Parent = ModalBox
+addCorner(CancelBtn, 6)
+
+local pendingScriptUrl = ""
+local pendingScriptName = ""
+local pendingScriptKey = nil
+local isOutdatedEmorfz = false
+
+local function openConfirmation(name, url, key, isOutdated)
+    pendingScriptName = name
+    pendingScriptUrl = url
+    pendingScriptKey = key
+    isOutdatedEmorfz = isOutdated or false
+
+    if isOutdatedEmorfz then
+        ModalTitle.Text = "AVISO IMPORTANTE"
+        ModalTitle.TextColor3 = Theme.red
+        ModalDesc.Text = "🔒 O script '" .. name .. "' está BLOQUEADO e em manutenção!\n\nAguarde a nova versão em até 24 horas."
+        ConfirmBtn.Visible = false
+        CancelBtn.Size = UDim2.new(0.9, 0, 0, 24)
+        CancelBtn.Position = UDim2.new(0.05, 0, 1, -30)
+        CancelBtn.Text = "ENTENDI"
+        CancelBtn.TextColor3 = Theme.text
+    else
+        ModalTitle.Text = "CONFIRMAÇÃO"
+        ModalTitle.TextColor3 = Theme.accentGlow
+        ModalDesc.Text = "Deseja executar:\n'" .. name .. "'?"
+        ConfirmBtn.Visible = true
+        CancelBtn.Size = UDim2.new(0.45, -4, 0, 24)
+        CancelBtn.Position = UDim2.new(0.5, 4, 1, -30)
+        CancelBtn.Text = "CANCELAR"
+        CancelBtn.TextColor3 = Theme.red
+    end
+    ModalOverlay.Visible = true
+end
+
+ConfirmBtn.MouseButton1Click:Connect(function()
+    ModalOverlay.Visible = false
+    if pendingScriptUrl ~= "" and not isOutdatedEmorfz then
+        showNotification("Carregando " .. pendingScriptName .. "...")
+        task.spawn(function()
+            local success, err = pcall(function()
+                if pendingScriptKey then getgenv().script_key = pendingScriptKey end
+                loadstring(game:HttpGet(pendingScriptUrl))()
+            end)
+            if success then
+                showNotification("Executado com sucesso!")
+            else
+                showNotification("Falha na execução")
+                warn("Erro: " .. tostring(err))
+            end
+        end)
+    end
+end)
+
+CancelBtn.MouseButton1Click:Connect(function()
+    ModalOverlay.Visible = false
+    pendingScriptUrl = ""
+    pendingScriptName = ""
+    pendingScriptKey = nil
+    isOutdatedEmorfz = false
+end)
+
+----------------------------------------------------------------
+-- LISTA COMPLETA DOS SCRIPTS RESTAURADOS
+----------------------------------------------------------------
+local scriptData = {
+    { category = "⭐ FAVORITADOS", items = {} },
+    {
+        category = "OFICIAIS LIMÃO",
+        items = {
+            {name = "Limão Hub Farm", url = "https://lua-launcher.lovable.app/raw/limao-hub-farm", desc = "Limão Hub Auto Farm", recommended = true},
+            {name = "Limão Hub Anti Hit", url = "https://raw.githubusercontent.com/matheusdasilvagama50-sudo/Bot/refs/heads/main/Limaoooo%20hub", desc = "Proteção Anti Hit Oficial do Limão Hub", recommended = true},
+            {name = "Limão Hub Anti Lag", url = "https://lua-launcher.lovable.app/raw/pro-hub-ant-lag", desc = "Novo Anti Lag Oficial do Limão Hub", recommended = true},
+            {name = "Limão Hub Server Hoop", url = "https://lua-launcher.lovable.app/raw/limao-hub-server-hoop-32uat", desc = "Limão Hub Server Hoop Oficial", recommended = true}
+        }
+    },
+    {
+        category = "GRATUITOS (SEM KEY)",
+        items = {
+            {name = "Shaders Roblox", url = "https://raw.githubusercontent.com/robloxscripts2026/simple-shader/refs/heads/main/lua", desc = "Melhores Graficos de Jogo", recommended = true},
+            {name = "Emorfz Hub", url = "https://herculesshield.discloud.app/api/v1/scripts/public/28c35fb6-068c-4bc4-9237-96ae822c0b29/download", desc = "Emorfz Hub Atualizado (Sem Key)", recommended = true},
+            {name = "Pulse Hub", url = "https://raw.githubusercontent.com/PulseZax/Loader/refs/heads/main/.lua", desc = "Pulse Hub Auto Farm (Sem Key)", recommended = true},
+            {name = "Lennon Hub V4", url = "https://raw.githubusercontent.com/lennonxscripts/lennonhubv4/refs/heads/main/stealanegg", desc = "Lennon Hub V4 Atualizado (Sem Key)", recommended = true},
+            {name = "Valinc Hub", url = "https://api.valincsyndicate.com/v1/releases/5502cba03703f4a3628d522d396b80d8.lua", desc = "Valinc Hub Steal an Egg & Sem Key"},
+            {name = "CR7 Hub", url = "https://flowauth.net/v1/loaders/3c4e87ed34813171b0f8d53a108a7d88.lua", desc = "CR7 Hub Auto Farm e Sem Key"},
+            {name = "UB Hub", url = "https://raw.githubusercontent.com/TeamUBHub/UBLoader/refs/heads/main/Loader.lua", desc = "UB Hub Auto Farm e Outros"},
+            {name = "Oxide Hub", url = "https://raw.githubusercontent.com/LSSOPS/OpenSource/refs/heads/main/OxideHub_Steal_An_Egg.lua", desc = "Oxide Hub Auto Farm & Sem Key"},
+            {name = "Steal an Egg", url = "https://raw.githubusercontent.com/Dodoyung24/script-core/main/Steal-An-Egg", desc = "Steal an Egg Script (Sem Key)"},
+            {name = "Steal an Egg Project Madara", url = "https://raw.githubusercontent.com/IsThisMe01/Project-Madara/refs/heads/main/stealanegg", desc = "Steal an Egg Project Madara (Sem Key)"},
+            {name = "Hoshi Hub", url = "https://hoshihub.site/loader.lua", desc = "Hoshi Hub Farm Completo & Sem Key"},
+            {name = "LKZ Hub", url = "https://api.luarmor.net/files/v4/loaders/65bf3459d87ba3ac46350e154b640929.lua", desc = "LKZ Hub Auto Farm & Mais"},
+            {name = "Foxname Hub", url = "https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Fn-stealanegg.lua", desc = "Foxname Hub Auto Farm & Mais"},
+            {name = "Ciao Hub Server Hoop", url = "https://pastefy.app/YoZocJ8O/raw", desc = "Ciao Hub Server Hoop para Steal An Egg"},
+            {name = "Blyxo Hub", url = "https://flowauth.net/v1/loaders/69d3463240384f3a73fbe32c178093a2.lua", desc = "Blyxo Hub Auto Farm & Outros"},
+            {name = "Miranda Hub V2", url = "https://api.luarmor.net/files/v4/loaders/6b07a458832f08b2314f706f14723212.lua", desc = "Miranda Hub V2 (Auto Farm & Outros)"},
+            {name = "Miranda Hub", url = "https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealeggies", desc = "Miranda Hub Atualizado (Sem Key)", recommended = true},
+            {name = "666 Hub", url = "https://raw.githubusercontent.com/Axelchelo/Steal-an-egg/refs/heads/main/666h4ck.lua", desc = "Steal An Egg Farm Hub"},
+            {name = "VoidShell Hub", url = "https://raw.githubusercontent.com/VoidShell-null/VoidShell-Hub/refs/heads/main/Scripts/StealAnEgg.luau", desc = "Steal An Egg Script Completo"},
+            {name = "Chilli Hub", url = "https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg", desc = "Steal An Egg Multi-funções", recommended = true},
+            {name = "Hzs Hub", url = "https://api.rubis.app/v2/scrap/2e7pEXWNvi1z4FMC/raw", desc = "Hzs Hub Script de Farm Completo"},
+            {name = "Hzs Hub V2", url = "https://api.rubis.app/v2/scrap/qqxixVTzVIq7pZXx/raw", desc = "Hzs Hub Auto Farm (Nova Versão)"},
+            {name = "Anti Hit (Polsec)", url = "https://api.getpolsec.com/scripts/hosted/6582551b42d21c6b7eb55f1d76d8d50ce53cb35592093d6615b5e83437594dc0.lua", desc = "Proteção Anti Hit (Trial Key)", key = "KEY"},
+            {name = "Fyy Hub", url = "https://raw.githubusercontent.com/napun87/stealanegg/refs/heads/main/fly.lua", desc = "Sistema de Voo para Steal An Egg"},
+            {name = "Bypass Anti Cheat", url = "https://pastefy.app/iedWaiQX/raw", desc = "Ignorar Proteções Anti-Cheat"}
+        }
+    },
+    {
+        category = "REQUEREM KEY",
+        items = {
+            {name = "Kexxe Hub", url = "https://raw.githubusercontent.com/premiumbuddy/kex/refs/heads/main/kexxxx", desc = "Kexxe Hub (Requer Key)", key = "KEY"},
+            {name = "Rift Hub", url = "https://rifton.top/loader.lua", desc = "Rift Hub (Requer Key)", key = "KEY"},
+            {name = "Nemesis Hub", url = "https://raw.githubusercontent.com/x2zu/loader/main/freeloader.lua", desc = "Nemesis Hub (Requer Key)", key = "KEY"},
+            {name = "Airflow", url = "https://airflowscript.com/loader", desc = "Airflow Hub (Requer Key)", key = "KEY"},
+            {name = "Saiops Hub", url = "https://api.saiops.cc/scripts/Steal-An-Egg-Script.lua", desc = "Saiops Hub (Requer Key)", key = "KEY"},
+            {name = "Pig Hub", url = "https://raw.githubusercontent.com/mopsscript7-gif/steal-an-egg/refs/heads/main/script.lua", desc = "Pig Hub (Requer Key)", key = "KEY"},
+            {name = "Seisen Hub", url = "https://api.jnkie.com/api/v1/luascripts/public/8ac2e97282ac0718aeeb3bb3856a2821d71dc9e57553690ab508ebdb0d1569da/download", desc = "Seisen Hub (Requer Key)", key = "KEY"},
+            {name = "Octopus Hub", url = "https://www.octopushub.xyz/loader", desc = "Octopus Hub (Requer Key)", key = "KEY"},
+            {name = "Selux Hub", url = "https://raw.githubusercontent.com/seltonmt012/sel01-rbx/main/loader.lua", desc = "Selux Hub (Requer Key)", key = "KEY"},
+            {name = "Zero Impact Hub", url = "https://raw.githubusercontent.com/FakeModz/ZeroImpact/refs/heads/main/Loader.lua", desc = "Zero Impact Hub (Requer Key)", key = "KEY"},
+            {name = "Rifton Hub", url = "https://rifton.top/loader.lua", desc = "Rifton Hub Script Atualizado", key = "KEY"},
+            {name = "Whitex Hub", url = "https://raw.githubusercontent.com/WhiteX1208/Scripts/refs/heads/main/StealAnEggs.luau", desc = "Whitex Hub Auto Farm & Requer Key", key = "KEY"},
+            {name = "Solix Hub", url = "https://raw.githubusercontent.com/bao8jl/solixhub/main/loader", desc = "Solix Hub Auto Farm & Requer Key", key = "KEY"},
+            {name = "Rezzy Hub", url = "https://raw.githubusercontent.com/Roman666Cabj/Nether/refs/heads/main/RezzyStealAnEgg.lua", desc = "Rezzy Hub Auto Farm e Requer Key", key = "KEY"},
+            {name = "Decode Hub", url = "https://raw.githubusercontent.com/ItzYumi/Decode/refs/heads/main/DE%3ACODE.lua", desc = "Decode Hub Farm & Requer Key", key = "KEY"},
+            {name = "Ajjan Hub", url = "https://api.luarmor.net/files/v4/loaders/36107afd3107e8d841f9d1a69e2465d4.lua", desc = "Ajjan Hub Auto Farm & Utilidades", key = "KEY"},
+            {name = "Sena Hub", url = "https://raw.githubusercontent.com/senarblx/sena/refs/heads/main/loader", desc = "Sena Hub Auto Farm & Mais", key = "KEY"},
+            {name = "Nasi Rendang", url = "https://raw.githubusercontent.com/JualNasiRendang/loader/refs/heads/main/main.lua", desc = "Steal An Egg Script Hub", key = "KEY"},
+            {name = "Clover Hub", url = "https://raw.githubusercontent.com/Ryuun0x/Clover/main/main.lua", desc = "Steal An Egg Clover Hub", key = "KEY"},
+            {name = "On Hub", url = "https://raw.githubusercontent.com/davizin713/ONhub/refs/heads/main/script.lua", desc = "Steal An Egg Farm Hub", key = "KEY"},
+            {name = "Zeroin Hub", url = "https://zeroinhub.com/api/script", desc = "Steal An Egg Script Farm", key = "KEY"},
+            {name = "Neo Hub", url = "https://raw.githubusercontent.com/neohubdev/script/main/script", desc = "Neo Hub Script de Farm", key = "KEY"},
+            {name = "Night Hub", url = "https://raw.githubusercontent.com/WhiteX1208/Scripts/refs/heads/main/StealEggOnly.luau", desc = "Steal An Egg Script Exclusivo", key = "KEY"},
+            {name = "Lemmon Hub V2", url = "https://raw.githubusercontent.com/napun87/stealanegg/refs/heads/main/lemonhubV2.lua", desc = "Versão Secundária Lemmon Hub", key = "KEY"}
+        }
+    },
+    {
+        category = "🔴 BLOQUEADOS / MANUTENÇÃO",
+        items = {
+            {name = "Lennon Farm V1", url = "https://raw.githubusercontent.com/lennonxscripts/lennonfarm/refs/heads/main/farmv1.lua", desc = "🔒 Bloqueado — Manutenção em 24h", outdated = true}
+        }
+    }
+}
+
+local function updateFavoritesCategory()
+    scriptData[1].items = {}
+    for _, cat in ipairs(scriptData) do
+        if cat.category ~= "⭐ FAVORITADOS" then
+            for _, item in ipairs(cat.items) do
+                if favorites[item.name] then
+                    table.insert(scriptData[1].items, item)
+                end
+            end
+        end
+    end
+end
+updateFavoritesCategory()
+
+local workingCount = 0
+local blockedCount = 0
+
+for _, catData in ipairs(scriptData) do
+    if catData.category ~= "⭐ FAVORITADOS" then
+        for _, item in ipairs(catData.items) do
+            if item.outdated then
+                blockedCount = blockedCount + 1
+            else
+                workingCount = workingCount + 1
+            end
+        end
+    end
+end
+
+BadgePillText.RichText = true
+BadgePillText.Text = '<font color="#84CC16">' .. workingCount .. '</font> <font color="#738E7A">|</font> <font color="#EF4444">' .. blockedCount .. '</font>'
+
+local cardElements = {}
+local categoryHeaders = {}
+local globalOrder = 0
+
+for _, catData in ipairs(scriptData) do
+    globalOrder = globalOrder + 1
+    
+    local catHeader = Instance.new("Frame")
+    catHeader.Size = UDim2.new(1, 0, 0, 24)
+    catHeader.BackgroundColor3 = Theme.categoryBg
+    catHeader.LayoutOrder = globalOrder
+    catHeader.ZIndex = 104
+    catHeader.Parent = Scroll
+    addCorner(catHeader, 6)
+    
+    local isFavCat = catData.category:find("FAVORITADOS")
+    local isBlockCat = catData.category:find("BLOQUEADOS")
+    local catColor = isFavCat and Theme.starActive or (isBlockCat and Theme.red or Theme.accentGlow)
+    addStroke(catHeader, catColor, 1, 0.4)
+
+    local catLabel = Instance.new("TextLabel")
+    catLabel.Text = catData.category
+    catLabel.TextSize = 8
+    catLabel.Font = Enum.Font.GothamBlack
+    catLabel.TextColor3 = catColor
+    catLabel.Size = UDim2.new(1, -10, 1, 0)
+    catLabel.Position = UDim2.new(0, 6, 0, 0)
+    catLabel.TextXAlignment = Enum.TextXAlignment.Left
+    catLabel.BackgroundTransparency = 1
+    catLabel.ZIndex = 105
+    catLabel.Parent = catHeader
+
+    table.insert(categoryHeaders, {frame = catHeader, category = catData.category})
+
+    for _, item in ipairs(catData.items) do
+        globalOrder = globalOrder + 1
+
+        local card = Instance.new("Frame")
+        card.Size = UDim2.new(1, 0, 0, 40)
+        card.BackgroundColor3 = Theme.card
+        card.LayoutOrder = globalOrder
+        card.ZIndex = 104
+        card.Parent = Scroll
+        addCorner(card, 8)
+        local cardStroke = addStroke(card, item.outdated and Theme.red or Theme.border, 1, item.outdated and 0.2 or 0.5)
+
+        local starBtn = Instance.new("TextButton")
+        starBtn.Size = UDim2.new(0, 24, 0, 24)
+        starBtn.Position = UDim2.new(0, 6, 0.5, -12)
+        starBtn.BackgroundTransparency = 1
+        starBtn.Text = favorites[item.name] and "⭐" or "☆"
+        starBtn.TextSize = 12
+        starBtn.Font = Enum.Font.GothamBold
+        starBtn.ZIndex = 105
+        starBtn.Parent = card
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Text = item.name
+        nameLabel.TextSize = 9
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextColor3 = item.outdated and Theme.textDim or Theme.text
+        nameLabel.Size = UDim2.new(0.48, -6, 0, 16)
+        nameLabel.Position = UDim2.new(0, 32, 0, 4)
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.ZIndex = 105
+        nameLabel.Parent = card
+
+        local descLabel = Instance.new("TextLabel")
+        descLabel.Text = item.desc
+        descLabel.TextSize = 7
+        descLabel.Font = Enum.Font.Gotham
+        descLabel.TextColor3 = item.outdated and Theme.red or Theme.textDim
+        descLabel.Size = UDim2.new(0.48, -6, 0, 14)
+        descLabel.Position = UDim2.new(0, 32, 0, 20)
+        descLabel.TextXAlignment = Enum.TextXAlignment.Left
+        descLabel.BackgroundTransparency = 1
+        descLabel.ZIndex = 105
+        descLabel.Parent = card
+
+        if item.recommended then
+            local recBadge = Instance.new("Frame")
+            recBadge.Size = UDim2.new(0, 68, 0, 16)
+            recBadge.Position = UDim2.new(0.53, 0, 0.5, -8)
+            recBadge.BackgroundColor3 = Theme.recBg
+            recBadge.ZIndex = 105
+            recBadge.Parent = card
+            addCorner(recBadge, 4)
+            addStroke(recBadge, Theme.recText, 1, 0.3)
+
+            local recText = Instance.new("TextLabel")
+            recText.Size = UDim2.new(1, 0, 1, 0)
+            recText.BackgroundTransparency = 1
+            recText.Text = "⭐ RECOMENDADO"
+            recText.TextSize = 5.5
+            recText.Font = Enum.Font.GothamBold
+            recText.TextColor3 = Theme.recText
+            recText.ZIndex = 106
+            recText.Parent = recBadge
+        end
+
+        local runBtn = Instance.new("TextButton")
+        runBtn.Size = UDim2.new(0.24, -4, 0, 24)
+        runBtn.Position = UDim2.new(0.76, 0, 0.5, -12)
+        runBtn.Text = item.outdated and "BLOQUEADO" or "EXECUTAR"
+        runBtn.TextSize = 7
+        runBtn.Font = Enum.Font.GothamBold
+        runBtn.ZIndex = 105
+        runBtn.Parent = card
+        addCorner(runBtn, 6)
+        
+        if item.outdated then
+            runBtn.BackgroundColor3 = Color3.fromRGB(45, 15, 15)
+            runBtn.TextColor3 = Theme.red
+            addStroke(runBtn, Theme.red, 1.2, 0)
+        else
+            runBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            runBtn.TextColor3 = Theme.bg
+            addGradient(runBtn, Theme.accentStart, Theme.accentEnd)
+        end
+
+        starBtn.MouseButton1Click:Connect(function()
+            if favorites[item.name] then
+                favorites[item.name] = nil
+                starBtn.Text = "☆"
+                showNotification("Removido dos Favoritos ❌")
+            else
+                favorites[item.name] = true
+                starBtn.Text = "⭐"
+                showNotification("Adicionado aos Favoritos ⭐")
+            end
+            saveFavorites()
+        end)
+
+        runBtn.MouseButton1Click:Connect(function()
+            openConfirmation(item.name, item.url, item.key, item.outdated)
+        end)
+
+        table.insert(cardElements, {
+            card = card,
+            name = item.name:lower(),
+            desc = item.desc:lower(),
+            category = catData.category
+        })
+    end
+end
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local text = SearchBox.Text:lower()
+    local activeCategories = {}
+
+    for _, item in ipairs(cardElements) do
+        if text == "" or item.name:find(text) or item.desc:find(text) then
+            item.card.Visible = true
+            activeCategories[item.category] = true
+        else
+            item.card.Visible = false
+        end
+    end
+
+    for _, cat in ipairs(categoryHeaders) do
+        cat.frame.Visible = (text == "" or activeCategories[cat.category] == true)
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+----------------------------------------------------------------
+-- ANIMAÇÃO DE ENTRADA
+----------------------------------------------------------------
+task.spawn(function()
+    local totalSeconds = 4
+    local steps = 40
+    local timePerStep = totalSeconds / steps
+
+    for i = 1, steps do
+        local progress = i / steps
+        local remaining = math.ceil(totalSeconds * (1 - progress))
+        
+        BarFill.Size = UDim2.new(progress, 0, 1, 0)
+        PercentLoadLbl.Text = math.floor(progress * 100) .."%"
+        StatusLoadLbl.Text = "Carregando — " .. remaining .. "s restantes"
+        
+        task.wait(timePerStep)
+    end
+
+    StatusLoadLbl.Text = "Pronto para iniciar!"
+    PercentLoadLbl.Text = "100%"
+    
+    ContinueBtn.BackgroundColor3 = Theme.accentStart
+    ContinueBtn.TextColor3 = Theme.bg
+    ContinueBtn.Text = "Continuar 🚀"
+    addGradient(ContinueBtn, Theme.accentStart, Theme.accentEnd, 90)
+    
+    ContinueBtn.MouseButton1Click:Connect(function()
+        local tweenOut = TweenService:Create(LoadGui, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = LoadGui.Position + UDim2.new(0, 190, 0, 175)  
+        })
+        tweenOut:Play()
+        tweenOut.Completed:Connect(function()
+            LoadGui:Destroy()
+            MainFrame.Visible = true
+            showNotification("Bem-vindo ao Limão Hub Pro!")
+        end)
+    end)
+end)
