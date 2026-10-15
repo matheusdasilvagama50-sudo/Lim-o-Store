@@ -1,0 +1,734 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#09070d">
+  <meta name="description" content="Conheça o HZS Executor V1. Uma nova identidade, interface moderna e novidades em breve.">
+  <title>HZS Executor — V1</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <style>
+    :root {
+      --bg: #09070d;
+      --panel: #100d16;
+      --panel2: #15101d;
+      --pink: #ff3fa4;
+      --pink2: #ff70c1;
+      --purple: #a855f7;
+      --text: #f8f5fb;
+      --muted: #9991a5;
+      --border: rgba(255,255,255,.085);
+      --glow: 0 0 45px rgba(255,63,164,.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+    body {
+      font-family: Inter, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(143,45,120,.14), transparent 43%),
+        var(--bg);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .12;
+      z-index: -1;
+      background-image: radial-gradient(rgba(255,255,255,.24) .7px, transparent .7px);
+      background-size: 27px 27px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+
+    .container { width: min(1120px, 90%); margin: auto; }
+
+    .navbar {
+      height: 76px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9,7,13,.83);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,63,164,.35);
+      border-radius: 12px;
+      color: var(--pink);
+      background: rgba(255,63,164,.09);
+      box-shadow: 0 0 20px rgba(255,63,164,.08);
+    }
+
+    .brand span { color: var(--pink); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      color: #c4bdcc;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .nav-links a:hover { color: var(--pink2); }
+
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      min-height: 45px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 9px;
+      padding: 0 19px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      background: #15111b;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      transition: .25s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,63,164,.5);
+    }
+
+    .btn-primary {
+      color: white;
+      border-color: transparent;
+      background: linear-gradient(110deg, #ff329d, #c43df0);
+      box-shadow: 0 7px 28px rgba(255,63,164,.2);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 10px 35px rgba(255,63,164,.35);
+    }
+
+    .menu-toggle {
+      width: 43px;
+      height: 43px;
+      display: none;
+      place-items: center;
+      color: white;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .hero {
+      min-height: 650px;
+      padding: 82px 0 75px;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(232,35,146,.08);
+      filter: blur(100px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; width: 100%; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 14px;
+      border: 1px solid rgba(255,63,164,.22);
+      border-radius: 30px;
+      background: rgba(255,63,164,.065);
+      color: #ff8bc9;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--pink);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--pink);
+    }
+
+    .hero-logo {
+      display: block;
+      width: min(390px, 82%);
+      height: auto;
+      max-height: 340px;
+      object-fit: contain;
+      margin: 23px auto 10px;
+      filter: drop-shadow(0 10px 45px rgba(255,38,158,.16));
+      animation: float 5s ease-in-out infinite;
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 66px);
+      line-height: 1.08;
+      letter-spacing: -3px;
+      font-weight: 900;
+      margin: 22px 0 17px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(100deg, #ff58b3, #d879ff 70%);
+      color: transparent;
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .hero p {
+      max-width: 600px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 29px;
+    }
+
+    .hero-buttons .btn { min-height: 51px; padding: 0 23px; }
+
+    .hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 23px;
+      flex-wrap: wrap;
+      margin-top: 27px;
+      color: #8c8298;
+      font-size: 11px;
+    }
+
+    .hero-meta i { color: var(--pink); margin-right: 6px; }
+
+    .section { padding: 82px 0; }
+
+    .section-heading { margin-bottom: 34px; }
+
+    .eyebrow {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--pink);
+      font-size: 11px;
+      letter-spacing: 2px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .section-heading h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.2;
+      letter-spacing: -1.5px;
+      margin-bottom: 12px;
+    }
+
+    .section-heading p {
+      max-width: 580px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .download-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 25px;
+      padding: 30px;
+      border: 1px solid rgba(255,63,164,.18);
+      border-radius: 23px;
+      background:
+        radial-gradient(ellipse at 100% 0%, rgba(255,63,164,.08), transparent 55%),
+        linear-gradient(145deg, #15101b, #0f0c14);
+      box-shadow: var(--glow);
+    }
+
+    .download-info { display: flex; align-items: center; gap: 19px; }
+
+    .download-icon {
+      width: 62px;
+      height: 62px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      border-radius: 17px;
+      color: var(--pink);
+      background: rgba(255,63,164,.1);
+      border: 1px solid rgba(255,63,164,.18);
+      font-size: 26px;
+    }
+
+    .download-info h3 { font-size: 19px; margin-bottom: 6px; }
+
+    .download-info p { color: var(--muted); font-size: 12px; }
+
+    .tag {
+      display: inline-flex;
+      margin-top: 11px;
+      padding: 5px 9px;
+      border-radius: 7px;
+      color: #ff8bc9;
+      background: rgba(255,63,164,.08);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .5px;
+    }
+
+    .download-action { text-align: right; }
+
+    .download-action small {
+      display: block;
+      color: #857c90;
+      font-size: 10px;
+      margin-top: 9px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 17px;
+    }
+
+    .feature-card {
+      min-height: 190px;
+      padding: 25px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(24,18,31,.8), rgba(13,10,18,.8));
+      transition: .25s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,63,164,.35);
+      box-shadow: 0 12px 35px rgba(0,0,0,.2);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 21px;
+      border: 1px solid rgba(255,63,164,.16);
+      border-radius: 13px;
+      color: var(--pink);
+      background: rgba(255,63,164,.07);
+      font-size: 17px;
+    }
+
+    .feature-card h3 { font-size: 15px; margin-bottom: 9px; }
+
+    .feature-card p {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .release-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 20px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--panel);
+    }
+
+    .release-title { display: flex; align-items: center; gap: 15px; }
+
+    .release-title .feature-icon { margin: 0; }
+
+    .release-title h3 { font-size: 17px; }
+    .release-title p { color: var(--muted); font-size: 12px; }
+
+    .release-status {
+      padding: 7px 11px;
+      border: 1px solid rgba(255,63,164,.2);
+      border-radius: 9px;
+      background: rgba(255,63,164,.07);
+      color: #ff83c3;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .release-notes {
+      margin-top: 23px;
+      padding-top: 19px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .release-notes strong { color: #e9e0ef; }
+
+    .faq-list { max-width: 780px; }
+
+    .faq-item {
+      margin-bottom: 11px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(19,15,25,.8);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 20px;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      text-align: left;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .faq-question i {
+      color: var(--pink);
+      transition: transform .2s ease;
+    }
+
+    .faq-answer {
+      display: none;
+      padding: 0 20px 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.9;
+    }
+
+    .faq-item.active .faq-answer { display: block; }
+    .faq-item.active .faq-question i { transform: rotate(180deg); }
+
+    .community {
+      padding: 45px 30px;
+      text-align: center;
+      border: 1px solid rgba(255,63,164,.18);
+      border-radius: 22px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,63,164,.11), transparent 70%), var(--panel);
+    }
+
+    .community h2 {
+      font-size: clamp(25px, 4vw, 36px);
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+
+    .community p {
+      max-width: 500px;
+      margin: 0 auto 23px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer {
+      padding: 30px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .footer-inner p { color: #82798d; font-size: 11px; }
+
+    .footer-links { display: flex; gap: 20px; color: #a9a0b4; font-size: 11px; }
+    .footer-links a:hover { color: var(--pink); }
+
+    .toast {
+      position: fixed;
+      z-index: 200;
+      left: 50%;
+      bottom: 25px;
+      width: max-content;
+      max-width: calc(100% - 32px);
+      padding: 15px 19px;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid rgba(255,63,164,.3);
+      border-radius: 13px;
+      background: #1a1220;
+      box-shadow: 0 10px 40px rgba(0,0,0,.4);
+      color: #f9eaf4;
+      font-size: 12px;
+      transition: .25s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity .65s ease, transform .65s ease;
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @media (max-width: 850px) {
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 76px;
+        left: 0;
+        right: 0;
+        padding: 22px 5%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        background: #0e0a13;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-links.open { display: flex; }
+      .nav-links a { padding: 13px 0; }
+      .menu-toggle { display: grid; }
+      .nav-actions > .btn { display: none; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero { min-height: 600px; }
+    }
+
+    @media (max-width: 560px) {
+      .container { width: 90%; }
+      .hero { padding: 65px 0 58px; min-height: 0; }
+      .hero-logo { width: min(310px, 85%); max-height: 280px; }
+      .hero h1 { letter-spacing: -1.8px; }
+      .hero p { font-size: 14px; }
+      .hero-meta { gap: 12px 17px; }
+      .section { padding: 57px 0; }
+      .features-grid { grid-template-columns: 1fr; }
+      .feature-card { min-height: 0; }
+      .download-card { grid-template-columns: 1fr; padding: 21px; }
+      .download-info { align-items: flex-start; gap: 13px; }
+      .download-icon { width: 49px; height: 49px; font-size: 21px; }
+      .download-info h3 { font-size: 15px; }
+      .download-action { text-align: left; }
+      .download-action .btn { width: 100%; }
+      .release-card { grid-template-columns: 1fr; padding: 21px; }
+      .release-status { justify-self: start; }
+      .community { padding: 34px 19px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+      .footer-links { flex-wrap: wrap; }
+      .hero-buttons .btn { flex: 1 1 160px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a class="brand" href="#inicio" aria-label="HZS Executor início">
+        <div class="brand-mark"><i class="fa-solid fa-bolt"></i></div>
+        HZS <span>EXECUTOR</span>
+      </a>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#inicio">Início</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#download">Download</a>
+        <a href="#versao">Versão</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#download" class="btn btn-primary">
+          <i class="fa-solid fa-download"></i> Download
+        </a>
+        <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="container hero-content">
+        <div class="pill"><span class="dot"></span> APRESENTANDO A VERSÃO 1</div>
+
+        <img
+          class="hero-logo"
+          src="https://raw.githubusercontent.com/matheusdasilvagama50-sudo/ADIDAS-XITS/main/Firefly_RemoveBackground.png"
+          alt="Logo HZS EXC com personagem rosa"
+          fetchpriority="high"
+          onerror="this.style.display='none'"
+        >
+
+        <h1>Uma nova identidade.<br><span class="gradient-text">Um novo começo.</span></h1>
+
+        <p>
+          Conheça o HZS Executor. Uma apresentação da primeira versão,
+          com visual renovado, identidade rosa e uma experiência pensada
+          para dispositivos móveis.
+        </p>
+
+        <div class="hero-buttons">
+          <a class="btn btn-primary" href="#recursos">
+            Explorar recursos <i class="fa-solid fa-arrow-right"></i>
+          </a>
+          <a class="btn" href="#download">
+            <i class="fa-solid fa-download"></i> Ver download
+          </a>
+        </div>
+
+        <div class="hero-meta">
+          <span><i class="fa-brands fa-android"></i> Android</span>
+          <span><i class="fa-solid fa-code-branch"></i> Versão 1.0</span>
+          <span><i class="fa-solid fa-wand-magic-sparkles"></i> Projeto demonstrativo</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="eyebrow">Downloads</span>
+          <h2>Encontre sua <span class="gradient-text">versão.</span></h2>
+          <p>Consulte as informações da primeira versão do HZS Executor.</p>
+        </div>
+
+        <div class="download-card reveal">
+          <div class="download-info">
+            <div class="download-icon"><i class="fa-brands fa-android"></i></div>
+            <div>
+              <h3>HZS Executor V1.0</h3>
+              <p>Plataforma Android · Versão 1.0.0</p>
+              <span class="tag">DEMONSTRAÇÃO</span>
+            </div>
+          </div>
+
+          <div class="download-action">
+            <button class="btn btn-primary" id="downloadButton">
+              <i class="fa-solid fa-download"></i> Download
+            </button>
+            <small>Arquivo oficial ainda não disponibilizado</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="recursos">
+      <div class="container">
+        <div class="section-heading reveal">
+          <span class="eyebrow">Por dentro do projeto</span>
+          <h2>Feito para uma experiência <span class="gradient-text">moderna.</span></h2>
+          <p>Conheça os destaques visuais e a proposta desta apresentação.</p>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card reveal">
+            <div class="feature-icon"><i class="fa-solid fa-palette"></i></div>
+            <h3>Identidade exclusiva</h3>
+            <p>Uma combinação de preto, rosa neon e roxo que dá personalidade ao projeto.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <h3>Design mobile</h3>
+            <p>Layout adaptável para celulares, tablets e telas maiores.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+            <h3>Animações suaves</h3>
+            <p>Transições discretas, elementos animados e efeitos delicados.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon"><i class="fa-solid fa-code-branch"></i></div>
+            <h3>Informações da versão</h3>
+            <p>Uma área dedicada aos detalhes e às futuras notas de atualização.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon"><i class="fa-solid fa-compass"></i></div>
+            <h3>Navegação simples</h3>
+            <p>Seções organizadas para encontrar rapidamente cada informação.</p>
+          </article>
+
+          <article cl
